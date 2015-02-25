@@ -35,9 +35,11 @@ class FlightData(object):
         self.read_data(self.csv_file_name)
 
         # change look of the plane here
-        self.x_coord = np.array([0,0,0,0,0,0,-0.2,-0.2,0])
-        self.y_coord = np.array([0,0.5,-0.5,0,0,0,0,0,0])
-        self.z_coord = np.array([0.5,-0.5,-0.5,0.5,0.7,0,-0.1,-0.2,-0.2])
+        # VTOL orientation for RPY=[0,0,0] is nose up (+Z), dorsal fin in -X direction
+        # (normal FW orientation pitched up by pi/2
+        self.x_coord = np.array([0,     0,    0,   0,   0, 0, -0.2, -0.2,  0])
+        self.y_coord = np.array([0,   0.5, -0.5,   0,   0, 0,    0,    0,  0])
+        self.z_coord = np.array([0.5,-0.5, -0.5, 0.5, 0.7, 0, -0.1, -0.2, -0.2])
 
         self.INDEX = np.arange(0,len(self.time),10)
         self.sim_len = len(self.INDEX)
@@ -105,6 +107,16 @@ class FlightData(object):
 
         return R
 
+    def rot_to_quat(self, R):
+
+        q = []
+        q.append(0.5 * sqrt(1.0 + R[0][0] + R[1][1] + R[2][2]))
+        q.append(0.5 * sqrt(1.0 + R[0][0] - R[1][1] - R[2][2]))
+        q.append(0.5 * sqrt(1.0 - R[0][0] + R[1][1] - R[2][2]))
+        q.append(0.5 * sqrt(1.0 - R[0][0] - R[1][1] + R[2][2]))
+
+        return q
+
     def rpy_to_quat(self,roll,pitch,yaw):
         # compute quaternion from XYZ fixed Euler angles
         # RPY = gamma, beta, alpha
@@ -124,7 +136,7 @@ class FlightData(object):
 
         return q
 
-    def rpy_to_R(self,roll,pitch,yaw):
+    def rpy_to_rot(self,roll,pitch,yaw):
 
         cg = cos(roll)
         sg = sin(roll)
@@ -162,19 +174,24 @@ class FlightData(object):
         z = []
         line = ax.plot(self.x_coord, self.y_coord, self.z_coord)[0]
 
-        if (0):
-            q = [self.qw[self.INDEX[self.frame]],self.qx[self.INDEX[self.frame]],self.qy[self.INDEX[self.frame]],self.qz[self.INDEX[self.frame]]]
+        if (1):
+            q = self.rpy_to_quat(pi/32, 0, 0)
+            # q = [self.qw[self.INDEX[self.frame]],self.qx[self.INDEX[self.frame]],self.qy[self.INDEX[self.frame]],self.qz[self.INDEX[self.frame]]]
             R = self.quat_to_rot(q)
         else:
             roll = self.roll[self.INDEX[self.frame]]
             pitch = self.pitch[self.INDEX[self.frame]]
             yaw = self.yaw[self.INDEX[self.frame]]
-            # roll = pi/8
-            # pitch = 0
-            # yaw = 0
-            R = self.rpy_to_R(roll,pitch,yaw)
+            roll = pi/8
+            pitch = 0
+            yaw = 0
+            R = self.rpy_to_rot(roll,pitch,yaw)
 
         for index,item in enumerate(self.x_coord):
+            # vec = np.dot(R,[self.x_coord[index],self.y_coord[index],self.z_coord[index]])
+            # x.append(vec[0])
+            # y.append(vec[1])
+            # z.append(vec[2])
             vec = np.dot(R,[self.x_coord[index],self.y_coord[index],self.z_coord[index]])
             x.append(vec[0] + self.x[self.INDEX[self.frame]])
             y.append(vec[1] + self.y[self.INDEX[self.frame]])
@@ -210,16 +227,6 @@ class FlightData(object):
             else:
                 print "unknown input command"
     def print_help(self):
-        r = pi/2
-        p = 0
-        y = 0
-        print("RPY: ", r, p, y)
-        R1 = self.rpy_to_R(r, p, y)
-        print("R1: ", R1)
-        q = self.rpy_to_quat(r, p, y)
-        print("q: ", q)
-        R = self.quat_to_rot(q)
-        print("R: ", R)
         print("""Usage:
                     time: Shows momentary time in percentage
                     reset: Resets animation
@@ -246,7 +253,8 @@ def _main():
         ax.set_xlabel('Z')
 
         line = ax.plot([-1,0,1],[-1,0,1],[-1,0,1])[0]
-        line_ani = animation.FuncAnimation(fig, x.animate,interval=10,blit=False)
+        line_ani = animation.FuncAnimation(fig, x.animate,1,interval=10,blit=False)
+        # line_ani = animation.FuncAnimation(fig, x.animate,interval=10,blit=False)
         plt.show()
 
 if __name__ == "__main__":
