@@ -22,6 +22,7 @@ class FlightData(object):
         self.csv_file_name = file_name.split('.')[0] + ".csv"
         self.header_list = []
         self.time = []
+        self.origin = [0, 0, 0]
         self.x = []
         self.y = []
         self.z = []
@@ -169,12 +170,22 @@ class FlightData(object):
         self.frame = self.frame + 1
         if self.frame >= self.INDEX[-2]:
             self.frame = 0
+        print(self.frame)
         ax.clear()
-        ax.set_xlim3d([self.x[self.INDEX[self.frame]]-1.0, 1.0+self.x[self.INDEX[self.frame]]])
         ax.set_xlabel('X')
-        ax.set_ylim3d([self.y[self.INDEX[self.frame]]-1.0, 1.0+self.y[self.INDEX[self.frame]]])
         ax.set_ylabel('Y')
-        ax.set_zlim3d([self.z[self.INDEX[self.frame]]-1.0, self.z[self.INDEX[self.frame]]+1.0])
+        ax.set_zlabel('Z')
+        position = [self.x[self.INDEX[self.frame]],self.y[self.INDEX[self.frame]],self.z[self.INDEX[self.frame]]]
+        # ax.set_xlim3d([self.x[self.INDEX[self.frame]]-1.0, 1.0+self.x[self.INDEX[self.frame]]])
+        # ax.set_ylim3d([self.y[self.INDEX[self.frame]]-1.0, 1.0+self.y[self.INDEX[self.frame]]])
+        # ax.set_zlim3d([self.z[self.INDEX[self.frame]]-1.0, 1.0+self.z[self.INDEX[self.frame]]])
+        dspan = 10
+        for i, pos in enumerate(position):
+            if (abs(pos - self.origin[i]) > dspan/2):
+                self.origin[i] = position[i]
+        ax.set_xlim3d([self.origin[0]-dspan/2, self.origin[0]+dspan/2])
+        ax.set_ylim3d([self.origin[1]-dspan/2, self.origin[1]+dspan/2])
+        ax.set_zlim3d([self.origin[2]-dspan/2, self.origin[2]+dspan/2])
         x = []
         y = []
         z = []
@@ -189,11 +200,11 @@ class FlightData(object):
             R = self.quat_to_rot(q)
         else:
             # verified correct for RPY values in sdlog2
-            # roll = self.roll[self.INDEX[self.frame]]
-            # pitch = self.pitch[self.INDEX[self.frame]]
-            # yaw = self.yaw[self.INDEX[self.frame]]
-            # R = self.rpy_to_rot(roll,pitch,yaw)
-            R = self.rpy_to_rot(pi/8,0,0)
+            roll = self.roll[self.INDEX[self.frame]]
+            pitch = self.pitch[self.INDEX[self.frame]]
+            yaw = self.yaw[self.INDEX[self.frame]]
+            R = self.rpy_to_rot(roll,pitch,yaw)
+            # R = self.rpy_to_rot(pi/8,0,0)
             # R = self.rpy_to_rot(0,pi/8,0)
             # R = self.rpy_to_rot(0,0,pi/8)
 
@@ -251,7 +262,7 @@ def _main():
         # Do animation
         fig = plt.figure()
         ax = p3.Axes3D(fig)
-        ax.set_xlim3d([-5.0, 1.0])
+        ax.set_xlim3d([-1.0, 1.0])
         ax.set_xlabel('X')
         ax.set_ylim3d([-1.0, 1.0])
         ax.set_xlabel('Y')
