@@ -41,6 +41,11 @@ class FlightData(object):
         self.y_coord = np.array([0,   0.5, -0.5,   0,   0, 0,    0,    0,  0])
         self.z_coord = np.array([0.5,-0.5, -0.5, 0.5, 0.7, 0, -0.1, -0.2, -0.2])
 
+        # Cartesian axes (body frame, x forward, y right, z down)
+        # self.x_coord = np.array([0, 1, 0, 0, 0,  0])
+        # self.y_coord = np.array([0, 0, 0, 1, 0,  0])
+        # self.z_coord = np.array([0, 0, 0, 0, 0, -1])
+
         self.INDEX = np.arange(0,len(self.time),10)
         self.sim_len = len(self.INDEX)
         self.offset = 0
@@ -72,6 +77,7 @@ class FlightData(object):
             ty = float(data[header_dic["ATT_qy"]])
             tz = float(data[header_dic["ATT_qz"]])
             if (tw == 0 and tx == 0 and ty == 0 and tz == 0):
+                # verified correct for RPY values in sdlog2
                 q = self.rpy_to_quat(gamma, beta, alpha)
                 self.qw.append(q[0])
                 self.qx.append(q[1])
@@ -148,13 +154,13 @@ class FlightData(object):
         R = np.zeros((3,3))
 
         R[0,0] = ca * cb
-        R[0,1] = sa * cb
-        R[0,2] = -sb
-        R[1,0] = ca * sb * sg - sa * cg
+        R[0,1] = ca * sb * sg - sa * cg
+        R[0,2] = ca * sb * cg + sa * sg
+        R[1,0] = sa * cb
         R[1,1] = sa * sb * sg + ca * cg
-        R[1,2] = cb * sg
-        R[2,0] = ca * sb * cg + sa * sg
-        R[2,1] = sa * sb * cg - ca * sg
+        R[1,2] = sa * sb * cg - ca * sg
+        R[2,0] = -sb
+        R[2,1] = cb * sg
         R[2,2] = cb * cg
 
         return R
@@ -175,23 +181,16 @@ class FlightData(object):
         line = ax.plot(self.x_coord, self.y_coord, self.z_coord)[0]
 
         if (1):
-            q = self.rpy_to_quat(pi/32, 0, 0)
-            # q = [self.qw[self.INDEX[self.frame]],self.qx[self.INDEX[self.frame]],self.qy[self.INDEX[self.frame]],self.qz[self.INDEX[self.frame]]]
+            q = [self.qw[self.INDEX[self.frame]],self.qx[self.INDEX[self.frame]],self.qy[self.INDEX[self.frame]],self.qz[self.INDEX[self.frame]]]
             R = self.quat_to_rot(q)
         else:
+            # verified correct for RPY values in sdlog2
             roll = self.roll[self.INDEX[self.frame]]
             pitch = self.pitch[self.INDEX[self.frame]]
             yaw = self.yaw[self.INDEX[self.frame]]
-            roll = pi/8
-            pitch = 0
-            yaw = 0
             R = self.rpy_to_rot(roll,pitch,yaw)
 
         for index,item in enumerate(self.x_coord):
-            # vec = np.dot(R,[self.x_coord[index],self.y_coord[index],self.z_coord[index]])
-            # x.append(vec[0])
-            # y.append(vec[1])
-            # z.append(vec[2])
             vec = np.dot(R,[self.x_coord[index],self.y_coord[index],self.z_coord[index]])
             x.append(vec[0] + self.x[self.INDEX[self.frame]])
             y.append(vec[1] + self.y[self.INDEX[self.frame]])
@@ -253,8 +252,7 @@ def _main():
         ax.set_xlabel('Z')
 
         line = ax.plot([-1,0,1],[-1,0,1],[-1,0,1])[0]
-        line_ani = animation.FuncAnimation(fig, x.animate,1,interval=10,blit=False)
-        # line_ani = animation.FuncAnimation(fig, x.animate,interval=10,blit=False)
+        line_ani = animation.FuncAnimation(fig, x.animate,interval=10,blit=False)
         plt.show()
 
 if __name__ == "__main__":
