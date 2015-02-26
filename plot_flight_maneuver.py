@@ -38,9 +38,9 @@ class FlightData(object):
         # change look of the plane here
         # VTOL orientation for RPY=[0,0,0] is nose up (-Z), dorsal fin in -X direction
         # (normal FW orientation pitched up by pi/2
-        self.x_coord = np.array([0,     0,    0,   0,   0, 0, -0.2, -0.2,  0])
-        self.y_coord = -np.array([0,   0.5, -0.5,   0,   0, 0,    0,    0,  0])
-        self.z_coord = -np.array([0.5,-0.5, -0.5, 0.5, 0.7, 0, -0.1, -0.2, -0.2])
+        self.x_coord = np.array([0,     0,    0,   0,   0, 0, -0.2, -0.2,   0])
+        self.y_coord = np.array([0,   0.5, -0.5,   0,   0, 0,    0,    0,  0])
+        self.z_coord = np.array([0.5,-0.5, -0.5, 0.5, 0.7, 0, -0.1, -0.2, -0.2])
 
         # Cartesian axes (body frame, x forward, y right, z down)
         # self.x_coord = np.array([0, 1, 0, 0, 0,  0])
@@ -167,6 +167,7 @@ class FlightData(object):
         return R
 
     def animate(self,i):
+        zsign = -1
         self.frame = self.frame + 1
         if self.frame >= self.sim_len:
             self.frame = 0
@@ -175,7 +176,7 @@ class FlightData(object):
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
-        position = [self.x[self.INDEX[self.frame]],self.y[self.INDEX[self.frame]],self.z[self.INDEX[self.frame]]]
+        position = [self.x[self.INDEX[self.frame]],self.y[self.INDEX[self.frame]],zsign*self.z[self.INDEX[self.frame]]]
         # ax.set_xlim3d([self.x[self.INDEX[self.frame]]-1.0, 1.0+self.x[self.INDEX[self.frame]]])
         # ax.set_ylim3d([self.y[self.INDEX[self.frame]]-1.0, 1.0+self.y[self.INDEX[self.frame]]])
         # ax.set_zlim3d([self.z[self.INDEX[self.frame]]-1.0, 1.0+self.z[self.INDEX[self.frame]]])
@@ -183,13 +184,16 @@ class FlightData(object):
         for i, pos in enumerate(position):
             if (abs(pos - self.origin[i]) > dspan/2):
                 self.origin[i] = position[i]
+                if (i==2):
+                    self.origin[i] *= zsign
         ax.set_xlim3d([self.origin[0]-dspan/2, self.origin[0]+dspan/2])
         ax.set_ylim3d([self.origin[1]-dspan/2, self.origin[1]+dspan/2])
-        ax.set_zlim3d([self.origin[2]-dspan/2, self.origin[2]+dspan/2])
+        ax.set_zlim3d([zsign*self.origin[2]-dspan/2, zsign*self.origin[2]+dspan/2])
+        ax.invert_zaxis()
         x = []
         y = []
         z = []
-        line = ax.plot(self.x_coord, self.y_coord, self.z_coord)[0]
+        line = ax.plot(self.x_coord, self.y_coord, zsign*self.z_coord)[0]
 
         if (1):
             # verified correct for RPY values in sdlog2
@@ -212,7 +216,7 @@ class FlightData(object):
             vec = np.dot(R,[self.x_coord[index],self.y_coord[index],self.z_coord[index]])
             x.append(vec[0] + self.x[self.INDEX[self.frame]])
             y.append(vec[1] + self.y[self.INDEX[self.frame]])
-            z.append(vec[2] + self.z[self.INDEX[self.frame]])
+            z.append(vec[2] + zsign * self.z[self.INDEX[self.frame]])
 
         line.set_data(np.array(x), np.array(y))
         line.set_3d_properties(np.array(z))
