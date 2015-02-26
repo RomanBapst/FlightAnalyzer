@@ -168,7 +168,7 @@ class FlightData(object):
 
     def animate(self,i):
         self.frame = self.frame + 1
-        if self.frame >= self.INDEX[-2]:
+        if self.frame >= self.sim_len:
             self.frame = 0
         print(self.frame)
         ax.clear()
@@ -262,6 +262,7 @@ def _main():
         # Do animation
         fig = plt.figure()
         ax = p3.Axes3D(fig)
+        ax.view_init(elev=-170)
         ax.set_xlim3d([-1.0, 1.0])
         ax.set_xlabel('X')
         ax.set_ylim3d([-1.0, 1.0])
