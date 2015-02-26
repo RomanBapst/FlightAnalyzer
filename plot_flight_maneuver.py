@@ -33,8 +33,6 @@ class FlightData(object):
         self.qx_des = []
         self.qy_des = []
         self.qz_des = []
-        self.read_data(self.csv_file_name)
-        
         self.roll = []
         self.pitch = []
         self.yaw = []
