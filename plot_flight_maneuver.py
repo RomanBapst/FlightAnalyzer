@@ -35,11 +35,11 @@ class FlightData(object):
         self.read_data(self.csv_file_name)
 
         # change look of the plane here
-        # VTOL orientation for RPY=[0,0,0] is nose up (+Z), dorsal fin in -X direction
+        # VTOL orientation for RPY=[0,0,0] is nose up (-Z), dorsal fin in -X direction
         # (normal FW orientation pitched up by pi/2
         self.x_coord = np.array([0,     0,    0,   0,   0, 0, -0.2, -0.2,  0])
-        self.y_coord = np.array([0,   0.5, -0.5,   0,   0, 0,    0,    0,  0])
-        self.z_coord = np.array([0.5,-0.5, -0.5, 0.5, 0.7, 0, -0.1, -0.2, -0.2])
+        self.y_coord = -np.array([0,   0.5, -0.5,   0,   0, 0,    0,    0,  0])
+        self.z_coord = -np.array([0.5,-0.5, -0.5, 0.5, 0.7, 0, -0.1, -0.2, -0.2])
 
         # Cartesian axes (body frame, x forward, y right, z down)
         # self.x_coord = np.array([0, 1, 0, 0, 0,  0])
@@ -174,27 +174,34 @@ class FlightData(object):
         ax.set_xlabel('X')
         ax.set_ylim3d([self.y[self.INDEX[self.frame]]-1.0, 1.0+self.y[self.INDEX[self.frame]]])
         ax.set_ylabel('Y')
-        ax.set_zlim3d([-self.z[self.INDEX[self.frame]]-1.0, - self.z[self.INDEX[self.frame]]+1.0])
+        ax.set_zlim3d([self.z[self.INDEX[self.frame]]-1.0, self.z[self.INDEX[self.frame]]+1.0])
         x = []
         y = []
         z = []
         line = ax.plot(self.x_coord, self.y_coord, self.z_coord)[0]
 
         if (1):
+            # verified correct for RPY values in sdlog2
+            # q = self.rpy_to_quat(pi/8, 0, 0)
+            # q = self.rpy_to_quat(0, pi/8, 0)
+            # q = self.rpy_to_quat(0, 0, pi/8)
             q = [self.qw[self.INDEX[self.frame]],self.qx[self.INDEX[self.frame]],self.qy[self.INDEX[self.frame]],self.qz[self.INDEX[self.frame]]]
             R = self.quat_to_rot(q)
         else:
             # verified correct for RPY values in sdlog2
-            roll = self.roll[self.INDEX[self.frame]]
-            pitch = self.pitch[self.INDEX[self.frame]]
-            yaw = self.yaw[self.INDEX[self.frame]]
-            R = self.rpy_to_rot(roll,pitch,yaw)
+            # roll = self.roll[self.INDEX[self.frame]]
+            # pitch = self.pitch[self.INDEX[self.frame]]
+            # yaw = self.yaw[self.INDEX[self.frame]]
+            # R = self.rpy_to_rot(roll,pitch,yaw)
+            R = self.rpy_to_rot(pi/8,0,0)
+            # R = self.rpy_to_rot(0,pi/8,0)
+            # R = self.rpy_to_rot(0,0,pi/8)
 
         for index,item in enumerate(self.x_coord):
             vec = np.dot(R,[self.x_coord[index],self.y_coord[index],self.z_coord[index]])
             x.append(vec[0] + self.x[self.INDEX[self.frame]])
             y.append(vec[1] + self.y[self.INDEX[self.frame]])
-            z.append(vec[2] - self.z[self.INDEX[self.frame]])
+            z.append(vec[2] + self.z[self.INDEX[self.frame]])
 
         line.set_data(np.array(x), np.array(y))
         line.set_3d_properties(np.array(z))
