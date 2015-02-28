@@ -171,18 +171,22 @@ class FlightData(object):
         self.frame = self.frame + 1
         if self.frame >= self.sim_len:
             self.frame = 0
+            print("looping")
         print(self.frame)
         ax.clear()
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
         position = [self.x[self.INDEX[self.frame]],self.y[self.INDEX[self.frame]],zsign*self.z[self.INDEX[self.frame]]]
-        # ax.set_xlim3d([self.x[self.INDEX[self.frame]]-1.0, 1.0+self.x[self.INDEX[self.frame]]])
-        # ax.set_ylim3d([self.y[self.INDEX[self.frame]]-1.0, 1.0+self.y[self.INDEX[self.frame]]])
-        # ax.set_zlim3d([self.z[self.INDEX[self.frame]]-1.0, 1.0+self.z[self.INDEX[self.frame]]])
-        dspan = 10
-        for i, pos in enumerate(position):
-            if (abs(pos - self.origin[i]) > dspan/2):
+        dspan = 2
+        if (dspan > 4):
+            for i, pos in enumerate(position):
+                if (abs(pos - self.origin[i]) > dspan/2):
+                    self.origin[i] = position[i]
+                    if (i==2):
+                        self.origin[i] *= zsign
+        else:
+            for i, pos in enumerate(position):
                 self.origin[i] = position[i]
                 if (i==2):
                     self.origin[i] *= zsign
@@ -276,7 +280,10 @@ def _main():
 
         line = ax.plot([-1,0,1],[-1,0,1],[-1,0,1])[0]
         line_ani = animation.FuncAnimation(fig, x.animate,interval=10,blit=False)
-        plt.show()
+        try:
+            plt.show()
+        except:
+            sys.exit()
 
 if __name__ == "__main__":
     _main()
