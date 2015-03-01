@@ -38,7 +38,7 @@ class FlightData(object):
         # change look of the plane here
         # VTOL orientation for RPY=[0,0,0] is nose up (-Z), dorsal fin in -X direction
         # (normal FW orientation pitched up by pi/2
-        self.x_coord = np.array([0,     0,    0,   0,   0, 0, -0.2, -0.2,   0])
+        self.x_coord = -np.array([0,     0,    0,   0,   0, 0, -0.2, -0.2,   0])
         self.y_coord = np.array([0,   0.5, -0.5,   0,   0, 0,    0,    0,  0])
         self.z_coord = np.array([0.5,-0.5, -0.5, 0.5, 0.7, 0, -0.1, -0.2, -0.2])
 
@@ -213,7 +213,7 @@ class FlightData(object):
             yaw = self.yaw[self.INDEX[self.frame]]
             R = self.rpy_to_rot(roll,pitch,yaw)
             # R = self.rpy_to_rot(pi/8,0,0)
-            # R = self.rpy_to_rot(0,pi/8,0)
+            R = self.rpy_to_rot(0,pi/8,0)
             # R = self.rpy_to_rot(0,0,pi/8)
 
         for index,item in enumerate(self.x_coord):
