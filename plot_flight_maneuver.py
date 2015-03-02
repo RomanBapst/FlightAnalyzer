@@ -72,10 +72,17 @@ class FlightData(object):
             self.y.append(float(data[header_dic["LPOS_Y"]]))
             self.z.append(float(data[header_dic["LPOS_Z"]]))
             
-            self.qw_des.append(float(data[header_dic["ATSP_qw"]]))
-            self.qx_des.append(float(data[header_dic["ATSP_qx"]]))
-            self.qy_des.append(float(data[header_dic["ATSP_qy"]]))
-            self.qz_des.append(float(data[header_dic["ATSP_qz"]]))
+            try:
+                self.qw_des.append(float(data[header_dic["ATSP_qw"]]))
+                self.qx_des.append(float(data[header_dic["ATSP_qx"]]))
+                self.qy_des.append(float(data[header_dic["ATSP_qy"]]))
+                self.qz_des.append(float(data[header_dic["ATSP_qz"]]))
+            except KeyError:
+                #quaternion setpoint not logged yet
+                self.qw_des.append(0)
+                self.qx_des.append(0)
+                self.qy_des.append(0)
+                self.qz_des.append(0)
             
     
             gamma = float(data[header_dic["ATT_Roll"]])
