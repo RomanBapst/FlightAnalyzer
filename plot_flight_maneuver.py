@@ -22,6 +22,7 @@ class FlightData(object):
         self.csv_file_name = file_name.split('.')[0] + ".csv"
         self.header_list = []
         self.time = []
+        self.origin = [0, 0, 0]
         self.x = []
         self.y = []
         self.z = []
@@ -41,9 +42,9 @@ class FlightData(object):
         # change look of the plane here
         # VTOL orientation for RPY=[0,0,0] is nose up (-Z), dorsal fin in -X direction
         # (normal FW orientation pitched up by pi/2
-        self.x_coord = np.array([0,     0,    0,   0,   0, 0, -0.2, -0.2,  0])
-        self.y_coord = -np.array([0,   0.5, -0.5,   0,   0, 0,    0,    0,  0])
-        self.z_coord = -np.array([0.5,-0.5, -0.5, 0.5, 0.7, 0, -0.1, -0.2, -0.2])
+        self.x_coord = -np.array([0,     0,    0,   0,   0, 0, -0.2, -0.2,   0])
+        self.y_coord = np.array([0,   0.5, -0.5,   0,   0, 0,    0,    0,  0])
+        self.z_coord = np.array([0.5,-0.5, -0.5, 0.5, 0.7, 0, -0.1, -0.2, -0.2])
 
         # Cartesian axes (body frame, x forward, y right, z down)
         # self.x_coord = np.array([0, 1, 0, 0, 0,  0])
@@ -181,12 +182,30 @@ class FlightData(object):
             self.frame = self.frame + 1
             if self.frame >= self.INDEX[-2]:
                 self.frame = 0
+        zsign = -1
+        if self.frame >= self.sim_len:
+            self.frame = 0
+            print("looping")
         ax.clear()
-        ax.set_xlim3d([self.x[self.INDEX[self.frame]]-1.0, 1.0+self.x[self.INDEX[self.frame]]])
         ax.set_xlabel('X')
-        ax.set_ylim3d([self.y[self.INDEX[self.frame]]-1.0, 1.0+self.y[self.INDEX[self.frame]]])
         ax.set_ylabel('Y')
-        ax.set_zlim3d([-self.z[self.INDEX[self.frame]]-1.0, - self.z[self.INDEX[self.frame]]+1.0])
+        ax.set_zlabel('Z')
+        position = [self.x[self.INDEX[self.frame]],self.y[self.INDEX[self.frame]],zsign*self.z[self.INDEX[self.frame]]]
+        dspan = 2
+        if (dspan > 4):
+            for i, pos in enumerate(position):
+                if (abs(pos - self.origin[i]) > dspan/2):
+                    self.origin[i] = position[i]
+                    if (i==2):
+                        self.origin[i] *= zsign
+        else:
+            for i, pos in enumerate(position):
+                self.origin[i] = position[i]
+                if (i==2):
+                    self.origin[i] *= zsign
+        ax.set_xlim3d([self.origin[0]-dspan/2, self.origin[0]+dspan/2])
+        ax.set_ylim3d([self.origin[1]-dspan/2, self.origin[1]+dspan/2])
+        ax.set_zlim3d([zsign*self.origin[2]-dspan/2, zsign*self.origin[2]+dspan/2])
         ax.invert_zaxis()
         x = []
         y = []
@@ -194,8 +213,8 @@ class FlightData(object):
         x_des = []
         y_des = []
         z_des = []
-        line = ax.plot(self.x_coord, self.y_coord, self.z_coord)[0]
-        line_des = ax.plot(self.x_coord, self.y_coord, self.z_coord)[0]
+        line = ax.plot(self.x_coord, self.y_coord, zsign*self.z_coord)[0]
+        line_des = ax.plot(self.x_coord, self.y_coord, zsign*self.z_coord)[0]
 
         if (1):
             # verified correct for RPY values in sdlog2
@@ -208,24 +227,24 @@ class FlightData(object):
             R_des = self.quat_to_rot(q_des)
         else:
             # verified correct for RPY values in sdlog2
-            # roll = self.roll[self.INDEX[self.frame]]
-            # pitch = self.pitch[self.INDEX[self.frame]]
-            # yaw = self.yaw[self.INDEX[self.frame]]
-            # R = self.rpy_to_rot(roll,pitch,yaw)
-            R = self.rpy_to_rot(pi/8,0,0)
-            # R = self.rpy_to_rot(0,pi/8,0)
+            roll = self.roll[self.INDEX[self.frame]]
+            pitch = self.pitch[self.INDEX[self.frame]]
+            yaw = self.yaw[self.INDEX[self.frame]]
+            R = self.rpy_to_rot(roll,pitch,yaw)
+            # R = self.rpy_to_rot(pi/8,0,0)
+            R = self.rpy_to_rot(0,pi/8,0)
             # R = self.rpy_to_rot(0,0,pi/8)
 
         for index,item in enumerate(self.x_coord):
             vec = np.dot(R,[self.x_coord[index],self.y_coord[index],self.z_coord[index]])
             x.append(vec[0] + self.x[self.INDEX[self.frame]])
             y.append(vec[1] + self.y[self.INDEX[self.frame]])
-            z.append(vec[2] - self.z[self.INDEX[self.frame]])
+            z.append(vec[2] + zsign * self.z[self.INDEX[self.frame]])
             vec_des = np.dot(R_des,[self.x_coord[index],self.y_coord[index],self.z_coord[index]])
             x_des.append(vec_des[0] + self.x[self.INDEX[self.frame]])
             y_des.append(vec_des[1] + self.y[self.INDEX[self.frame]])
-            z_des.append(vec_des[2] - self.z[self.INDEX[self.frame]])
-            
+            z_des.append(vec_des[2] + zsign*self.z[self.INDEX[self.frame]])      
+
         line.set_data(np.array(x), np.array(y))
         line.set_3d_properties(np.array(z))
         line_des.set_data(np.array(x_des), np.array(y_des))
@@ -287,7 +306,8 @@ def _main():
         # Do animation
         fig = plt.figure()
         ax = p3.Axes3D(fig)
-        ax.set_xlim3d([-5.0, 1.0])
+        ax.view_init(elev=-170)
+        ax.set_xlim3d([-1.0, 1.0])
         ax.set_xlabel('X')
         ax.set_ylim3d([-1.0, 1.0])
         ax.set_xlabel('Y')
@@ -297,7 +317,10 @@ def _main():
         line_des = ax.plot([-1,0,1],[-1,0,1],[-1,0,1])[0]
         lines = [line,line_des]
         line_ani = animation.FuncAnimation(fig, x.animate,interval=10,blit=False)
-        plt.show()
+        try:
+            plt.show()
+        except:
+            sys.exit()
 
 if __name__ == "__main__":
     _main()
