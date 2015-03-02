@@ -11,7 +11,7 @@ from math import *
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d.axes3d as p3
 import matplotlib.animation as animation
-import thread,sys,time
+import thread,sys,time,os.path
 import sdlog2_dump
 
 __author__ = "Roman Bapst"
@@ -49,7 +49,7 @@ class FlightData(object):
         # self.x_coord = np.array([0, 1, 0, 0, 0,  0])
         # self.y_coord = np.array([0, 0, 0, 1, 0,  0])
         # self.z_coord = np.array([0, 0, 0, 0, 0, -1])
-
+        self.animation_state = 'run'
         self.INDEX = np.arange(0,len(self.time),10)
         self.sim_len = len(self.INDEX)
         self.offset = 0
@@ -177,9 +177,10 @@ class FlightData(object):
         return R
 
     def animate(self,i):
-        self.frame = self.frame + 1
-        if self.frame >= self.INDEX[-2]:
-            self.frame = 0
+        if self.animation_state == 'run':
+            self.frame = self.frame + 1
+            if self.frame >= self.INDEX[-2]:
+                self.frame = 0
         ax.clear()
         ax.set_xlim3d([self.x[self.INDEX[self.frame]]-1.0, 1.0+self.x[self.INDEX[self.frame]]])
         ax.set_xlabel('X')
@@ -248,6 +249,16 @@ class FlightData(object):
                 if command[1] == 'time':
                     desired_index = floor(int(command[2])/100*self.sim_len)
                     self.frame = desired_index
+            elif user_input == 'p':
+                self.animation_state = 'paused'
+            elif user_input == 'r':
+                self.animation_state = 'run'
+            elif user_input == '+' and self.animation_state == 'paused':
+                self.frame = self.frame + 1
+            elif user_input == '-' and self.animation_state == 'paused':
+                self.frame = self.frame - 1
+            elif user_input == 'sec':
+                print (self.time[self.INDEX[self.frame]] - self.time[0])/(1e6)
             elif user_input == 'rtf':
                 frame = self.frame
                 time.sleep(3)
@@ -263,8 +274,10 @@ class FlightData(object):
 
 def _main():
     file_name = sys.argv[1]
-    sys.argv = [file_name,file_name,'-f',file_name.split('.')[0]+'.csv','-t','TIME','-m','TIME','-m','ATT','-m','LPOS','-m','ATSP' ]
-    sdlog2_dump._main()
+    #only parse log if the csv does not exist yet
+    if not os.path.exists(file_name.split('.')[0] + '.csv'):
+        sys.argv = [file_name,file_name,'-f',file_name.split('.')[0]+'.csv','-t','TIME','-m','TIME','-m','ATT','-m','LPOS','-m','ATSP' ]
+        sdlog2_dump._main()
 
     x = FlightData(file_name)
     thread.start_new_thread(x.user_input,())
