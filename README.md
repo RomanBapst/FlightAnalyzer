@@ -15,6 +15,10 @@ add the following to you .bashrc file:
 
     $ source ~/.bashrc
     
+4) make the script executable:
+
+    $ sudo chmod +x plot_maneuver_quad.py
+    
 Now you should be able to call the script globally und provide it the path to the logfile as first argument, e.g.:
 
     $ plot_maneuver_quad.py /path/to/log/file
