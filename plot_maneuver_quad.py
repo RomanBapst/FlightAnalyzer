@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
 # Author: Roman Bapst
 # Date: 02.01.2015
@@ -112,7 +112,6 @@ class FlightData(object):
                 self.qy.append(ty)
                 self.qz.append(tz)
                 #print(data[header_dic["ATT_qw"]], data[header_dic["ATT_qx"]], data[header_dic["ATT_qy"]], data[header_dic["ATT_qz"]] )
-
     def quat_to_rot(self,q):
         #compute rotation matrix from quaternion
         q0 = q[0]
@@ -275,7 +274,13 @@ class FlightData(object):
                 self.frame = 0
             elif command[0] == 'set':
                 if command[1] == 'time':
-                    desired_index = floor(int(command[2])/100*self.sim_len)
+                    time_des = float(command[2])
+                    desired_index = 0
+                    for index,item in enumerate(self.time):
+                        if (item - self.time[0])*1e-6 >= time_des:
+                            desired_index = index - 1
+                            print(item)
+                            break
                     self.frame = desired_index
             elif user_input == 'p':
                 self.animation_state = 'paused'
