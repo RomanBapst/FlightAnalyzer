@@ -269,7 +269,7 @@ class FlightData(object):
             if user_input == 'help':
                 self.print_help()
             elif user_input == 'time':
-                print self.frame/self.sim_len*100
+                print (self.time[self.INDEX[self.frame]] - self.time[0])/(1e6)
             elif user_input == 'reset':
                 self.frame = 0
             elif command[0] == 'set':
@@ -290,8 +290,6 @@ class FlightData(object):
                 self.frame = self.frame + 1
             elif user_input == '-' and self.animation_state == 'paused':
                 self.frame = self.frame - 1
-            elif user_input == 'sec':
-                print (self.time[self.INDEX[self.frame]] - self.time[0])/(1e6)
             elif user_input == 'rtf':
                 frame = self.frame
                 time.sleep(3)
@@ -301,9 +299,14 @@ class FlightData(object):
                 print "unknown input command"
     def print_help(self):
         print("""Usage:
-                    time: Shows momentary time in percentage
-                    reset: Resets animation
-                    set time <value>: Sets the time to value [in percent]""")
+                    time: print momentary time in seconds
+                    reset: reset animation
+                    set time <value>: set the time to <value> [in seconds]
+                    p: pause the animation
+                    r: run the animation
+                    + step forward one sample (only in paused mode)
+                    - step backwards one sample (only in paused mode)
+                    rtf: print current real time factor""")
 
 def _main():
     file_name = sys.argv[1]
