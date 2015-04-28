@@ -1,0 +1,3 @@
+*.px4log
+*.csv
+*.pyc
